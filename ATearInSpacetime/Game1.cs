@@ -284,7 +284,7 @@ namespace ATearInSpacetime
             postEffect.Parameters["offset"].SetValue(screenShake);
             postEffect.Parameters["t"].SetValue((float)gameTime.TotalGameTime.TotalSeconds);
             postEffect.CommitChanges();
-            spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+            spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
             postEffect.Begin();
             postEffect.CurrentTechnique.Passes[0].Begin();
             spriteBatch.Draw(sceneTex, new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), Color.White);
@@ -298,8 +298,10 @@ namespace ATearInSpacetime
         public void NewGame()
         {
             entities = new List<triangleEntity>();
-            entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, Keys.W, Keys.I));
-            entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, Keys.LeftShift, Keys.Z));
+            //entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, Keys.W, Keys.I));
+            //entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, Keys.LeftShift, Keys.Z));
+            entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, Keys.Q, Keys.W));
+            entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, Keys.OemComma, Keys.OemPeriod));
             for (int i = 0; i < particles.Length; i++)
             {
                 particles[i] = Particle.RandomParticle();

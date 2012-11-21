@@ -6,8 +6,8 @@ sampler textureSampler = sampler_state
 	minfilter = LINEAR;
 };
 
-float t;
-float2 offset;
+shared float t;
+shared float2 offset;
 
 float4 FilmGrain(float2 texCoord: TEXCOORD0) : COLOR
 {
@@ -28,14 +28,14 @@ float4 FilmGrain(float2 texCoord: TEXCOORD0) : COLOR
 	float3 lerpfactor = pow(color.rgb, 0.15);
 	color.rgb = lerpfactor * color.rgb + (1-lerpfactor)*x*color.rgb*2;
 	
-	return color;
+	return color * 1.25f;
 }
 
 technique T1
 {
 	pass P1
 	{
-		PixelShader = compile ps_3_0 FilmGrain();
+		PixelShader = compile ps_2_0 FilmGrain();
 	}
 		
 }
