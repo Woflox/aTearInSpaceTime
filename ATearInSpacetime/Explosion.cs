@@ -18,7 +18,7 @@ namespace ATearInSpacetime
         float initialWidth;
         float initialLength;
 
-        static float collisionFudge = 1.5f;
+        static float collisionFudge = 1.0f;
 
         public static void CreateExplosionAtPoint(Vector2 pos)
         {

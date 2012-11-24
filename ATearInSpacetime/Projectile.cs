@@ -33,50 +33,57 @@ namespace ATearInSpacetime
 
         public override void Update(float dt)
         {
-            timeLeft -= dt;
-
-            velocity = launchVelocity * (timeLeft / initialLifetime);
-            this.pos += velocity * dt;
-
-            bool shouldDoEffect = false;
-            if (timeLeft < dt)
+            float timeSteps = 3;
+            dt /= timeSteps;
+            for (int i = 0; i < timeSteps; i++)
             {
-                shouldDoEffect = true;
-            }
+                timeLeft -= dt;
 
-            if (Math.Abs(pos.X) > 4.0f / 3.0f)
-            {
-                destroyed = true;
-            }
+                velocity = launchVelocity * (timeLeft / initialLifetime);
+                this.pos += velocity * dt;
 
+                recalcVertices();
 
-
-            foreach (triangleEntity entity in Game1.instance.entities)
-            {
-                if (entity.type == EntityType.Ship && entity != owner)
+                bool shouldDoEffect = false;
+                if (timeLeft < dt)
                 {
-                    if (IsOverlapping(entity))
+                    shouldDoEffect = true;
+                }
+
+                if (Math.Abs(pos.X) > 4.0f / 3.0f || Math.Abs(pos.Y) > 1)
+                {
+                    destroyed = true;
+                }
+
+
+
+                foreach (triangleEntity entity in Game1.instance.entities)
+                {
+                    if (entity.type == EntityType.Ship && entity != owner)
                     {
-                        shouldDoEffect = true;
-                        entity.destroyed = true;
-                        Game1.instance.GameOver(entity);
+                        if (IsOverlapping(entity))
+                        {
+                            shouldDoEffect = true;
+                            entity.destroyed = true;
+                            Game1.instance.GameOver(entity);
+                        }
+                    }
+                    else if (entity.type == EntityType.Obstacle)
+                    {
+                        if (IsOverlapping(entity))
+                        {
+                            shouldDoEffect = true;
+                        }
                     }
                 }
-                else if (entity.type == EntityType.Obstacle)
+
+                if (shouldDoEffect)
                 {
-                    if (IsOverlapping(entity))
-                    {
-                        shouldDoEffect = true;
-                    }
+                    DoEffect();
+                    return;
                 }
+
             }
-
-            if (shouldDoEffect)
-            {
-                DoEffect();
-            }
-
-
             base.Update(dt);
         }
 
@@ -87,12 +94,12 @@ namespace ATearInSpacetime
             if (effect == EntityType.Explosion)
             {
                 Explosion.CreateExplosionAtPoint(pos);
-                Game1.instance.explode.Play();
+                Game1.instance.playSound(Game1.instance.explode, pos);
             }
             else if (effect == EntityType.Obstacle)
             {
                 Obstacle.CreateClump(pos);
-                Game1.instance.clump.Play();
+                Game1.instance.playSound(Game1.instance.clump, pos);
             }
         }
 

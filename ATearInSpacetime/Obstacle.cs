@@ -17,14 +17,6 @@ namespace ATearInSpacetime
 
         int numGrows = 0;
 
-        float fullWidth;
-        float fullLength;
-
-        float tSinceBirth = 0;
-        float birthTime = 0;
-
-        bool firstFull = true;
-
 
 
         public static void CreateClump(Vector2 pos)
@@ -41,46 +33,25 @@ namespace ATearInSpacetime
         }
 
         public Obstacle(Vector2 pos, Vector2 direction, float width, float length)
-            : base(pos, direction, 0, 0, new Color(100, 32, 0), EntityType.Obstacle)
+            : base(pos, direction, width, width, new Color(100, 32, 0), EntityType.Obstacle)
         {
-            averageGrowTime = 5.0f;
-            fullWidth = width;
-            fullLength = length;
+            averageGrowTime = 3.675f;
         }
 
         public override void  Update(float dt)
         {
-            if (tSinceBirth < birthTime)
-            {
-                tSinceBirth += dt;
 
-                width = fullWidth * tSinceBirth / birthTime;
-                length = fullLength * tSinceBirth / birthTime;
-                recalcEverything();
-            }
-            else if (firstFull)
+            for (int i = 0; i < numGrows; i++)
             {
-                firstFull = false;
-                width = fullWidth;
-                length = fullLength;
-                recalcEverything();
-                for (int i = 0; i < numGrows; i++)
-                {
-                    MakeGrowAttempt();
-                }
+                MakeGrowAttempt();
             }
+            numGrows = 0;
+
             float p = dt / averageGrowTime;
  
             if (Game1.rand.NextDouble() <= p)
             {
-                if (tSinceBirth >= birthTime)
-                {
-                    MakeGrowAttempt();
-                }
-                else
-                {
-                    numGrows++;
-                }
+                 MakeGrowAttempt();
             }
 
  	        base.Update(dt);
@@ -88,10 +59,6 @@ namespace ATearInSpacetime
 
         public void MakeGrowAttempt()
         {
-            if (Math.Abs(pos.X) > 4.0f / 3 || Math.Abs(pos.Y) > 1)
-            {
-                return;
-            }
 
             int vertexOffset = Game1.rand.Next(3);
 

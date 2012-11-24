@@ -20,8 +20,13 @@ namespace ATearInSpacetime
         public const int SCREEN_HEIGHT = 768;
         public const int TARGET_WIDTH = 640;
         public const int TARGET_HEIGHT = 480;
-        const bool FULL_SCREEN = true;
+        const bool FULL_SCREEN = false;
 
+        public const Keys P1_FIRE_1 = Keys.Q;//W;
+        public const Keys P1_FIRE_2 = Keys.W;//I;
+        public const Keys P2_FIRE_1 = Keys.OemComma;//LeftShift;
+        public const Keys P2_FIRE_2 = Keys.OemPeriod;//Z
+        
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -36,6 +41,11 @@ namespace ATearInSpacetime
 
         public float timeSinceGameStart = 0;
 
+        public float timeIdling;
+
+        public int player1Score;
+        public int player2Score;
+
         float textFade;
 
         public List<triangleEntity> entities;
@@ -48,6 +58,13 @@ namespace ATearInSpacetime
         RenderTarget2D sceneTarget;
 
         SpriteFont font;
+        SpriteFont smallFont;
+
+        SoundEffectInstance ambianceInstance;
+        SoundEffect ambiance;
+
+        public KeyboardState keyboardState;
+        public KeyboardState lastKeyboardState;
 
         public Game1()
         {
@@ -90,22 +107,26 @@ namespace ATearInSpacetime
             triangleEffect = Content.Load<Effect>("TriangleEffect");
             postEffect = Content.Load<Effect>("Post");
             font = Content.Load<SpriteFont>("font");
+            smallFont = Content.Load<SpriteFont>("smallfont");
             vd = new VertexDeclaration(GraphicsDevice, VertexPositionColor.VertexElements);
-            song = Content.Load<Song>("atearinspacetime");
+            ambiance = Content.Load<SoundEffect>("atearinspacetimeshort");
             charge = Content.Load<SoundEffect>("charge");
             clump = Content.Load<SoundEffect>("clump");
             explode = Content.Load<SoundEffect>("explode");
             bigExplosion = Content.Load<SoundEffect>("bigExplosion");
             shoot = Content.Load<SoundEffect>("shoot");
             Noise3.init();
-            
+
+            SoundEffect.MasterVolume = 1.0f;
             
             sceneTarget = new RenderTarget2D(GraphicsDevice, TARGET_WIDTH, TARGET_HEIGHT, 1, SurfaceFormat.Bgr32);
-            MediaPlayer.IsRepeating = true;
-            MediaPlayer.Play(song);
+            ambianceInstance = ambiance.CreateInstance();
+            ambianceInstance.Volume = 0.65f;
+            ambianceInstance.IsLooped = true;
+            ambianceInstance.Play();
+
 
             NewGame();
-            // TODO: use this.Content to load your game content here
         }
 
         /// <summary>
@@ -114,7 +135,6 @@ namespace ATearInSpacetime
         /// </summary>
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
         }
 
         /// <summary>
@@ -124,16 +144,21 @@ namespace ATearInSpacetime
         /// <param name="gameTime">Provides a snapshot of timing values.</param>n
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit
-            if (Keyboard.GetState().IsKeyDown(Keys.S) || Keyboard.GetState().IsKeyDown(Keys.LeftControl))
-                this.Exit();
-
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             timeSinceGameStart += dt;
             timeSinceExplosion += dt;
             timeSinceClump += dt;
             timeSinceButtonPress += dt;
+
+            lastKeyboardState = keyboardState;
+            keyboardState = Keyboard.GetState();
+
+            timeIdling += dt;
+            if (timeIdling > 30)
+            {
+                Exit();
+            }
 
             for (int i = 0; i < entities.Count; i++)
             {
@@ -154,18 +179,57 @@ namespace ATearInSpacetime
             {
                 timeSinceGameOver += dt;
 
-                if (timeSinceGameOver > 1.5f)
+                if (timeSinceGameOver > 1.5f && !completeGameOver)
                 {
-                    NewGame();
+                    NewRound();
+                }
+                if (timeSinceGameOver > 1.5f && completeGameOver)
+                {
+                    KeyboardState State = Keyboard.GetState();
+                    if ((keyboardState.IsKeyDown(P1_FIRE_1) && !lastKeyboardState.IsKeyDown(P1_FIRE_1))
+                        || (keyboardState.IsKeyDown(P1_FIRE_2) && !lastKeyboardState.IsKeyDown(P1_FIRE_2))
+                        || (keyboardState.IsKeyDown(P2_FIRE_1) && !lastKeyboardState.IsKeyDown(P2_FIRE_1))
+                        || (keyboardState.IsKeyDown(P2_FIRE_2) && !lastKeyboardState.IsKeyDown(P2_FIRE_2)))
+                    {
+                        NewGame();
+                    }
+                }
+                if (timeSinceGameOver > 11.5f)
+                {
+                    Exit();
                 }
             }
-            float moveSpeed = 5.0f;
-            float noiseScale = 1.0f;
-            screenShake.X = Noise3.noise((timeSinceGameStart * moveSpeed) * noiseScale,
-                                  0);
 
-            screenShake.Y = Noise3.noise(0,
-                                  (timeSinceGameStart * moveSpeed) * noiseScale);
+            {
+                float moveSpeed = 5.0f;
+                float noiseScale = 1.0f;
+                screenShake.X = Noise3.noise((timeSinceGameStart * moveSpeed) * noiseScale,
+                                      0);
+
+                screenShake.Y = Noise3.noise(0,
+                                      (timeSinceGameStart * moveSpeed) * noiseScale);
+            }
+
+            {
+                float moveSpeed = 5.0f;
+                float noiseScale = 0.15f;
+
+                float varianceDivisor = 4.0f;
+                float baseSoundLevel = 0.6f;
+
+                float leftsample = (Noise3.noise((-4.0f/3.0f+ Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                float middlesample = (Noise3.noise((Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                float rightsample = (Noise3.noise((4.0f / 3.0f + Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                float totalVolume = leftsample + middlesample + rightsample;
+                float averageVolume = totalVolume / 3;
+                float panning = -leftsample / (totalVolume - middlesample/2) + rightsample / (totalVolume - middlesample/2);
+
+                ambianceInstance.Volume = averageVolume * (0.5f + Math.Abs(panning)/2.0f);
+                ambianceInstance.Pan = panning;
+            }
 
             float screenShakeScale = 0.00075f;
             if (timeSinceExplosion < 0.5f)
@@ -179,6 +243,7 @@ namespace ATearInSpacetime
 
             base.Update(gameTime);
         }
+
 
         /// <summary>
         /// This is called when the game should draw itself.
@@ -266,16 +331,47 @@ namespace ATearInSpacetime
 
             Color textColor = new Color(textFade, textFade, textFade);
 
+
             spriteBatch.Begin(SpriteBlendMode.Additive, SpriteSortMode.Immediate, SaveStateMode.SaveState);
-            spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 112), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 368), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
-                                    new Vector2(260, 112), textColor, (float)Math.PI / 2, Vector2.Zero, 0.75f, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
-                                    new Vector2(390, 368), textColor, -(float)Math.PI / 2, Vector2.Zero, 0.75f, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "Press Btn 4 To Exit", new Vector2(18, 290), new Color(0, 180, 255), (float)Math.PI / 2, Vector2.Zero, 0.75f, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "Press Btn 4 To Exit", new Vector2(622, 190), new Color(0, 180, 255), -(float)Math.PI / 2, Vector2.Zero, 0.75f, SpriteEffects.None, 0);
-            
+
+
+            if (completeGameOver)
+            {
+                if (winningPlayer == 1)
+                {
+                    spriteBatch.DrawString(font, "YOU WIN", new Vector2(270, 190), Color.White, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                    spriteBatch.DrawString(font, "YOU LOSE", new Vector2(370, 290), Color.White, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                }
+                else
+                {
+                    spriteBatch.DrawString(font, "YOU LOSE", new Vector2(270, 190), Color.White, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                    spriteBatch.DrawString(font, "YOU WIN", new Vector2(370, 290), Color.White, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                }
+                if (timeSinceGameOver > 1.5f)
+                {
+                    spriteBatch.DrawString(smallFont, "Play again?",
+                                            new Vector2(200, 185), Color.White, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                    spriteBatch.DrawString(smallFont, "Play again?",
+                                            new Vector2(440, 295), Color.White, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                    spriteBatch.DrawString(font, ((int)(12.5f - timeSinceGameOver)).ToString(),
+                                            new Vector2(170, 235), Color.White, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                    spriteBatch.DrawString(font, ((int)(12.5f - timeSinceGameOver)).ToString(),
+                                            new Vector2(470, 245), Color.White, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                }
+            }
+            else
+            {
+                spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 102), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 378), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                spriteBatch.DrawString(smallFont, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
+                                        new Vector2(260, 102), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                spriteBatch.DrawString(smallFont, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
+                                        new Vector2(390, 378), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+            }
+
+            spriteBatch.DrawString(smallFont, "LIVES: " + player1Score, new Vector2(28, 20), new Color(255, 255, 255), (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+            spriteBatch.DrawString(smallFont, "LIVES: " + player2Score, new Vector2(612, 460), new Color(255, 255, 255), -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+
             spriteBatch.End();
 
             //post
@@ -295,13 +391,23 @@ namespace ATearInSpacetime
             base.Draw(gameTime);
         }
 
-        public void NewGame()
+        public void NewRound()
         {
+            if (entities != null)
+            {
+                foreach (triangleEntity entity in entities)
+                {
+                    if (entity.type == triangleEntity.EntityType.Ship)
+                    {
+                        ((Ship)entity).charge1SoundInstance.Dispose();
+                        ((Ship)entity).charge2SoundInstance.Dispose();
+                    }
+                }
+            }
+
             entities = new List<triangleEntity>();
-            //entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, Keys.W, Keys.I));
-            //entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, Keys.LeftShift, Keys.Z));
-            entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, Keys.Q, Keys.W));
-            entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, Keys.OemComma, Keys.OemPeriod));
+            entities.Add(new Ship(new Vector2(-0.75f * (4.0f / 3), 0), -1 * (4.0f / 3), -0.25f * (4.0f / 3), new Vector2(1, 0), new Color(0, 100, 0), Keys.R, Keys.F, Keys.D, Keys.G, P1_FIRE_1, P1_FIRE_2, 1));
+            entities.Add(new Ship(new Vector2(0.75f * (4.0f / 3), 0), 0.25f * (4.0f / 3), 1 * (4.0f / 3), new Vector2(-1, 0), new Color(128, 0, 128), Keys.Up, Keys.Down, Keys.Left, Keys.Right, P2_FIRE_1, P2_FIRE_2, 2));
             for (int i = 0; i < particles.Length; i++)
             {
                 particles[i] = Particle.RandomParticle();
@@ -319,6 +425,8 @@ namespace ATearInSpacetime
         }
 
         public bool gameOver;
+        public bool completeGameOver;
+        public int winningPlayer;
         float timeSinceGameOver;
         public void GameOver(triangleEntity destroyedShip)
         {
@@ -326,8 +434,54 @@ namespace ATearInSpacetime
             {
                 gameOver = true;
                 timeSinceGameOver = 0;
-                bigExplosion.Play();
+                playSound(bigExplosion, destroyedShip.pos);
+
+                if (((Ship)destroyedShip).playerNum == 1)
+                {
+                    player1Score--;
+                    player2Score++;
+                }
+                else
+                {
+                    player2Score--;
+                    player1Score++;
+                }
+                if (player1Score <= 0)
+                {
+                    completeGameOver = true;
+                    winningPlayer = 2;
+                }
+                else if (player2Score <= 0)
+                {
+                    completeGameOver = true;
+                    winningPlayer = 1;
+                }
+
+                if (completeGameOver)
+                {
+                    foreach (triangleEntity entity in entities)
+                    {
+                        if (entity.type == triangleEntity.EntityType.Ship)
+                        {
+                            entity.destroyed = true;
+                            ((Ship)entity).explode = false;
+                        }
+                    }
+                }
             }
+        }
+
+        public void NewGame()
+        {
+            player1Score = 3;
+            player2Score = 3;
+            NewRound();
+            completeGameOver = false;
+        }
+
+        public void playSound(SoundEffect sound, Vector2 pos)
+        {
+            sound.Play(0.5f + Math.Abs(pos.X * (3.0f / 4.0f)) / 2.0f, 0, pos.X * (3.0f / 4.0f));
         }
     }
 }
