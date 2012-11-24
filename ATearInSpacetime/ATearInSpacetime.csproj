@@ -84,7 +84,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Charge.cs" />
     <Compile Include="Explosion.cs" />
+    <Compile Include="Flame.cs" />
     <Compile Include="Noise3.cs" />
     <Compile Include="Obstacle.cs" />
     <Compile Include="Particle.cs" />

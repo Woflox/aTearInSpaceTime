@@ -26,6 +26,11 @@ namespace ATearInSpacetime
         public const Keys P1_FIRE_2 = Keys.W;//I;
         public const Keys P2_FIRE_1 = Keys.OemComma;//LeftShift;
         public const Keys P2_FIRE_2 = Keys.OemPeriod;//Z
+
+        //public const Keys P1_FIRE_1 = Keys.W;
+        //public const Keys P1_FIRE_2 = Keys.I;
+        //public const Keys P2_FIRE_1 = Keys.LeftShift;
+        //public const Keys P2_FIRE_2 = Keys.Z
         
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;

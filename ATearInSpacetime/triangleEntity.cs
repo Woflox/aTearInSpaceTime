@@ -30,7 +30,9 @@ namespace ATearInSpacetime
             Projectile,
             Obstacle,
             Explosion,
-            Particle
+            Particle,
+            Charge,
+            Flame
         }
 
         public EntityType type;
