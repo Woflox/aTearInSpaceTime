@@ -1,3 +1,5 @@
+
+#define KEYBOARD_CONTROLS
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +24,17 @@ namespace ATearInSpacetime
         public const int TARGET_HEIGHT = 480;
         const bool FULL_SCREEN = false;
 
-        public const Keys P1_FIRE_1 = Keys.Q;//W;
-        public const Keys P1_FIRE_2 = Keys.W;//I;
-        public const Keys P2_FIRE_1 = Keys.OemComma;//LeftShift;
-        public const Keys P2_FIRE_2 = Keys.OemPeriod;//Z
-
-        //public const Keys P1_FIRE_1 = Keys.W;
-        //public const Keys P1_FIRE_2 = Keys.I;
-        //public const Keys P2_FIRE_1 = Keys.LeftShift;
-        //public const Keys P2_FIRE_2 = Keys.Z
+#if KEYBOARD_CONTROLS
+        public const Keys P1_FIRE_1 = Keys.Q;
+        public const Keys P1_FIRE_2 = Keys.W;
+        public const Keys P2_FIRE_1 = Keys.OemComma;
+        public const Keys P2_FIRE_2 = Keys.OemPeriod;
+#else
+        public const Keys P1_FIRE_1 = Keys.W;
+        public const Keys P1_FIRE_2 = Keys.I;
+        public const Keys P2_FIRE_1 = Keys.LeftShift;
+        public const Keys P2_FIRE_2 = Keys.Z;
+#endif
         
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -160,10 +164,12 @@ namespace ATearInSpacetime
             keyboardState = Keyboard.GetState();
 
             timeIdling += dt;
+#if !KEYBOARD_CONTROLS
             if (timeIdling > 30)
             {
                 Exit();
             }
+#endif
 
             for (int i = 0; i < entities.Count; i++)
             {
@@ -219,15 +225,15 @@ namespace ATearInSpacetime
                 float moveSpeed = 5.0f;
                 float noiseScale = 0.15f;
 
-                float varianceDivisor = 4.0f;
+                float varianceDivisor = 3.0f;
                 float baseSoundLevel = 0.6f;
 
                 float leftsample = (Noise3.noise((-4.0f/3.0f+ Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
-                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + baseSoundLevel;
                 float middlesample = (Noise3.noise((Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
-                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + baseSoundLevel;
                 float rightsample = (Noise3.noise((4.0f / 3.0f + Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale,
-                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + 0.6f;
+                                      (Game1.instance.timeSinceGameStart * moveSpeed) * noiseScale) / varianceDivisor) + baseSoundLevel;
                 float totalVolume = leftsample + middlesample + rightsample;
                 float averageVolume = totalVolume / 3;
                 float panning = -leftsample / (totalVolume - middlesample/2) + rightsample / (totalVolume - middlesample/2);
@@ -368,10 +374,18 @@ namespace ATearInSpacetime
             {
                 spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 102), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, "A TEAR IN SPACE-TIME", new Vector2(320, 378), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
-                spriteBatch.DrawString(smallFont, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
+#if KEYBOARD_CONTROLS    
+                spriteBatch.DrawString(smallFont, "Controls\nRDFG - Move\nHold " + P1_FIRE_1 + " - Launch Bomb\nHold " + P1_FIRE_2 + " - Launch Shard",
                                         new Vector2(260, 102), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
-                spriteBatch.DrawString(smallFont, "Controls\nStick: Move\nHold Button 1: Launch Bomb\nHold Button 2: Launch Shard",
+                spriteBatch.DrawString(smallFont, "Controls\nArrows - Move\nHold < - Launch Bomb\nHold > - Launch Shard",
                                         new Vector2(390, 378), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+#else
+                spriteBatch.DrawString(smallFont, "Controls\nStick - Move\nHold Button 1 - Launch Bomb\nHold Button 2 - Launch Shard",
+                                        new Vector2(260, 102), textColor, (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+                spriteBatch.DrawString(smallFont, "Controls\nStick - Move\nHold Button 1 - Launch Bomb\nHold Button 2 - Launch Shard",
+                                        new Vector2(390, 378), textColor, -(float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
+
+#endif
             }
 
             spriteBatch.DrawString(smallFont, "LIVES: " + player1Score, new Vector2(28, 20), new Color(255, 255, 255), (float)Math.PI / 2, Vector2.Zero, 1, SpriteEffects.None, 0);
