@@ -93,7 +93,7 @@ namespace ATearInSpacetime
 
             if (effect == EntityType.Explosion)
             {
-                Explosion.CreateExplosionAtPoint(pos);
+                Explosion.CreateExplosionAtPoint(pos, true);
                 Game1.instance.playSound(Game1.instance.explode, pos);
             }
             else if (effect == EntityType.Obstacle)

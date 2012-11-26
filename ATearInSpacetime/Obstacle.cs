@@ -33,9 +33,9 @@ namespace ATearInSpacetime
         }
 
         public Obstacle(Vector2 pos, Vector2 direction, float width, float length)
-            : base(pos, direction, width, width, new Color(100, 32, 0), EntityType.Obstacle)
+            : base(pos, direction, width, length, new Color(100, 32, 0), EntityType.Obstacle)
         {
-            averageGrowTime = 3.675f;
+            averageGrowTime = 5;
         }
 
         public override void  Update(float dt)

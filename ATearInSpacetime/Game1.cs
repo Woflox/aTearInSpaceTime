@@ -22,7 +22,7 @@ namespace ATearInSpacetime
         public const int SCREEN_HEIGHT = 768;
         public const int TARGET_WIDTH = 640;
         public const int TARGET_HEIGHT = 480;
-        const bool FULL_SCREEN = false;
+        const bool FULL_SCREEN = true;
 
 #if KEYBOARD_CONTROLS
         public const Keys P1_FIRE_1 = Keys.Q;

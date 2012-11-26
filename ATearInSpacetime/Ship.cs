@@ -121,7 +121,7 @@ namespace ATearInSpacetime
                 fire1Charge += chargeRate * dt;
                 fire1Charge = Math.Min(1, fire1Charge);
                 charge1SoundInstance.Pan = pos.X * (3.0f / 4.0f);
-                charge1SoundInstance.Volume = 0.65f * (0.5f + Math.Abs(pos.X / (3.0f / 4.0f))/2.0f);
+                charge1SoundInstance.Volume = 0.65f * (0.5f + Math.Abs(pos.X * (3.0f / 4.0f))/2.0f);
                 Game1.instance.timeSinceButtonPress = 0;
                 Game1.instance.timeIdling = 0;
             }
@@ -149,7 +149,7 @@ namespace ATearInSpacetime
                 fire2Charge += chargeRate * dt;
                 fire2Charge = Math.Min(1, fire2Charge);
                 charge2SoundInstance.Pan = pos.X * (3.0f / 4.0f);
-                charge2SoundInstance.Volume = 0.65f * (0.5f + Math.Abs(pos.X / (3.0f / 4.0f))/2.0f);
+                charge2SoundInstance.Volume = 0.65f * (0.5f + Math.Abs(pos.X * (3.0f / 4.0f))/2.0f);
                 Game1.instance.timeSinceButtonPress = 0;
                 Game1.instance.timeIdling = 0;
             }
@@ -167,6 +167,7 @@ namespace ATearInSpacetime
             }
 
 
+            bool destroyedByObstacle = false;
             foreach (triangleEntity entity in Game1.instance.entities)
             {
                 if (entity.type == EntityType.Obstacle)
@@ -175,13 +176,16 @@ namespace ATearInSpacetime
                     {
                         destroyed = true;
                         Game1.instance.GameOver(this);
+                        destroyedByObstacle = true;
                     }
                 }
             }
-            if (destroyed && explode)
+
+            if (destroyedByObstacle)
             {
-                Explosion.CreateExplosionAtPoint(pos);
+                Explosion.CreateExplosionAtPoint(pos, false);
             }
+
             if (destroyed)
             {
                 charge1SoundInstance.Dispose();
